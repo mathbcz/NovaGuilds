@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class VersionUtils {
+
 	private static int buildCurrent;
 	private static int buildLatest;
 	private static int buildDev;
