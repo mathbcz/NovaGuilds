@@ -31,94 +31,90 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChestGUIUtils {
-	public static final List<NovaPlayer> guiContinueList = new ArrayList<>();
 
-	private ChestGUIUtils() {
+    public static final List<NovaPlayer> guiContinueList = new ArrayList<>();
 
-	}
+    private ChestGUIUtils() {
 
-	/**
-	 * Creates a number which is the multiple of 9
-	 * So an inventory can be created with it
-	 *
-	 * @param count amount of items
-	 * @return suitable inventory size
-	 */
-	public static int getChestSize(int count) {
-		return count == 0 ? 9 : (count / 9) * 9 + (count % 9 == 0 ? 0 : 9);
-	}
+    }
 
-	/**
-	 * Opens inventory gui
-	 *
-	 * @param nPlayer      player
-	 * @param guiInventory target gui
-	 */
-	public static void openGUIInventory(NovaPlayer nPlayer, GUIInventory guiInventory) {
-		if(nPlayer.isOnline()) {
-			nPlayer.setGuiInventory(guiInventory);
+    /**
+     * Creates a number which is the multiple of 9
+     * So an inventory can be created with it
+     *
+     * @param count amount of items
+     * @return suitable inventory size
+     */
+    public static int getChestSize(int count) {
+        return (Math.floorDiv(Math.abs(count - 1), 9) + 1) * 9;
+    }
 
-			if(!guiContinueList.contains(nPlayer)) {
-				guiContinueList.add(nPlayer);
-			}
+    /**
+     * Opens inventory gui
+     *
+     * @param nPlayer      player
+     * @param guiInventory target gui
+     */
+    public static void openGUIInventory(NovaPlayer nPlayer, GUIInventory guiInventory) {
+        if (nPlayer.isOnline()) {
+            nPlayer.setGuiInventory(guiInventory);
 
-			guiInventory.getInventory().clear();
-			guiInventory.getExecutors().clear();
-			guiInventory.generateContent();
-			addBackItem(guiInventory);
+            if (!guiContinueList.contains(nPlayer)) {
+                guiContinueList.add(nPlayer);
+            }
 
-			nPlayer.getPlayer().openInventory(guiInventory.getInventory());
+            guiInventory.getInventory().clear();
+            guiInventory.getExecutors().clear();
+            guiInventory.generateContent();
+            addBackItem(guiInventory);
 
-			guiContinueList.remove(nPlayer);
+            nPlayer.getPlayer().openInventory(guiInventory.getInventory());
 
-			guiInventory.onOpen();
-		}
-	}
+            guiContinueList.remove(nPlayer);
 
-	/**
-	 * Creates an inventory
-	 *
-	 * @param size  size
-	 * @param title title
-	 * @return the inventory
-	 */
-	public static Inventory createInventory(int size, String title) {
-		if(title.length() > 32) {
-			title = title.substring(0, 32);
-		}
+            guiInventory.onOpen();
+        }
+    }
 
-		return Bukkit.createInventory(null, size, title);
-	}
+    /**
+     * Creates an inventory
+     *
+     * @param size  size
+     * @param title title
+     * @return the inventory
+     */
+    public static Inventory createInventory(int size, String title) {
+        if (title.length() > 32) {
+            title = title.substring(0, 32);
+        }
 
-	/**
-	 * Creates an inventory
-	 *
-	 * @param size  size
-	 * @param title title message
-	 * @return the inventory
-	 */
-	public static Inventory createInventory(int size, MessageWrapper title) {
-		String string = "";
+        return Bukkit.createInventory(null, size, title);
+    }
 
-		if(title != null) {
-			string = title.get();
-		}
+    /**
+     * Creates an inventory
+     *
+     * @param size  size
+     * @param title title message
+     * @return the inventory
+     */
+    public static Inventory createInventory(int size, MessageWrapper title) {
+        return createInventory(size, title != null ? title.get() : "");
+    }
 
-		return createInventory(size, string);
-	}
+    /**
+     * Adds a item allowing to return to a previous gui
+     *
+     * @param guiInventory gui
+     */
+    public static void addBackItem(GUIInventory guiInventory) {
+        Inventory inventory = guiInventory.getInventory();
+        NovaPlayer nPlayer = guiInventory.getViewer();
 
-	/**
-	 * Adds a item allowing to return to a previous gui
-	 *
-	 * @param guiInventory gui
-	 */
-	public static void addBackItem(GUIInventory guiInventory) {
-		Inventory inventory = guiInventory.getInventory();
-		NovaPlayer nPlayer = guiInventory.getViewer();
+        ItemStack lastItem = inventory.getItem(inventory.getSize() - 1);
+        if ((lastItem == null || lastItem.getType() == Material.AIR) && nPlayer.getGuiInventoryHistory().size() > 1) {
+            inventory.setItem(inventory.getSize() - 1, Message.INVENTORY_GUI_BACK.getItemStack());
+        }
+    }
 
-		ItemStack lastItem = inventory.getItem(inventory.getSize() - 1);
-		if((lastItem == null || lastItem.getType() == Material.AIR) && nPlayer.getGuiInventoryHistory().size() > 1) {
-			inventory.setItem(inventory.getSize() - 1, Message.INVENTORY_GUI_BACK.getItemStack());
-		}
-	}
 }

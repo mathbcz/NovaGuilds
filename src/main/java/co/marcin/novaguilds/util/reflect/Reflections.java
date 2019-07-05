@@ -32,339 +32,324 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public final class Reflections {
-	private static Method entityGetHandleMethod;
-	private static Method worldGetHandleMethod;
-	private static Field modifiersField;
 
-	static {
-		try {
-			if(NovaGuilds.getInstance() != null) {
-				Class<?> craftWorldClass = getBukkitClass("CraftWorld");
-				Class<?> craftEntityClass = getBukkitClass("entity.CraftEntity");
-				worldGetHandleMethod = getMethod(craftWorldClass, "getHandle");
-				entityGetHandleMethod = getMethod(craftEntityClass, "getHandle");
-				modifiersField = getPrivateField(Field.class, "modifiers");
-			}
-		}
-		catch(NoSuchFieldException | ClassNotFoundException | NoSuchMethodException e) {
-			LoggerUtils.exception(e);
-		}
-	}
+    private static Method entityGetHandleMethod;
+    private static Method worldGetHandleMethod;
+    private static Field modifiersField;
 
-	/**
-	 * Gets a class
-	 *
-	 * @param name class name
-	 * @return class instance
-	 * @throws ClassNotFoundException when the class doesn't exist
-	 */
-	public static Class<?> getClass(String name) throws ClassNotFoundException {
-		return Class.forName(name);
-	}
+    static {
+        try {
+            if (NovaGuilds.getInstance() != null) {
+                Class<?> craftWorldClass = getBukkitClass("CraftWorld");
+                Class<?> craftEntityClass = getBukkitClass("entity.CraftEntity");
+                worldGetHandleMethod = getMethod(craftWorldClass, "getHandle");
+                entityGetHandleMethod = getMethod(craftEntityClass, "getHandle");
+                modifiersField = getPrivateField(Field.class, "modifiers");
+            }
+        } catch (NoSuchFieldException | ClassNotFoundException | NoSuchMethodException e) {
+            LoggerUtils.exception(e);
+        }
+    }
 
-	/**
-	 * Gets NMS class
-	 *
-	 * @param name class name
-	 * @return class
-	 * @throws ClassNotFoundException when the class doesn't exist
-	 */
-	public static Class<?> getCraftClass(String name) throws ClassNotFoundException {
-		return getClass("net.minecraft.server." + getVersion() + name);
-	}
+    /**
+     * Gets a class
+     *
+     * @param name class name
+     * @return class instance
+     * @throws ClassNotFoundException when the class doesn't exist
+     */
+    public static Class<?> getClass(String name) throws ClassNotFoundException {
+        return Class.forName(name);
+    }
 
-	/**
-	 * Gets CraftBukkit class
-	 *
-	 * @param name class name
-	 * @return class
-	 * @throws ClassNotFoundException when the class doesn't exist
-	 */
-	public static Class<?> getBukkitClass(String name) throws ClassNotFoundException {
-		return getClass("org.bukkit.craftbukkit." + getVersion() + name);
-	}
+    /**
+     * Gets NMS class
+     *
+     * @param name class name
+     * @return class
+     * @throws ClassNotFoundException when the class doesn't exist
+     */
+    public static Class<?> getCraftClass(String name) throws ClassNotFoundException {
+        return getClass("net.minecraft.server." + getVersion() + name);
+    }
 
-	/**
-	 * Gets the handle of an entity
-	 *
-	 * @param entity target entity
-	 * @return entity handle
-	 * @throws InvocationTargetException when something goes wrong
-	 * @throws IllegalAccessException    when something goes wrong
-	 */
-	public static Object getHandle(Entity entity) throws InvocationTargetException, IllegalAccessException {
-		return entityGetHandleMethod.invoke(entity);
-	}
+    /**
+     * Gets CraftBukkit class
+     *
+     * @param name class name
+     * @return class
+     * @throws ClassNotFoundException when the class doesn't exist
+     */
+    public static Class<?> getBukkitClass(String name) throws ClassNotFoundException {
+        return getClass("org.bukkit.craftbukkit." + getVersion() + name);
+    }
 
-	/**
-	 * Gets the handle of a world
-	 *
-	 * @param world target world
-	 * @return world handle
-	 * @throws InvocationTargetException when something goes wrong
-	 * @throws IllegalAccessException    when something goes wrong
-	 */
-	public static Object getHandle(World world) throws InvocationTargetException, IllegalAccessException {
-		return worldGetHandleMethod.invoke(world);
-	}
+    /**
+     * Gets the handle of an entity
+     *
+     * @param entity target entity
+     * @return entity handle
+     * @throws InvocationTargetException when something goes wrong
+     * @throws IllegalAccessException    when something goes wrong
+     */
+    public static Object getHandle(Entity entity) throws InvocationTargetException, IllegalAccessException {
+        return entityGetHandleMethod.invoke(entity);
+    }
 
-	/**
-	 * Gets a field
-	 *
-	 * @param clazz     class
-	 * @param fieldName field name
-	 * @return field
-	 * @throws NoSuchFieldException when something goes wrong
-	 */
-	public static Field getField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
-		return clazz.getDeclaredField(fieldName);
-	}
+    /**
+     * Gets the handle of a world
+     *
+     * @param world target world
+     * @return world handle
+     * @throws InvocationTargetException when something goes wrong
+     * @throws IllegalAccessException    when something goes wrong
+     */
+    public static Object getHandle(World world) throws InvocationTargetException, IllegalAccessException {
+        return worldGetHandleMethod.invoke(world);
+    }
 
-	/**
-	 * Gets a field
-	 *
-	 * @param target    class
-	 * @param fieldType field type
-	 * @param index     index
-	 * @param <T>       type
-	 * @return field accessor
-	 * @throws NoSuchFieldException when something goes wrong
-	 */
-	public static <T> FieldAccessor<T> getField(Class<?> target, Class<T> fieldType, int index) throws NoSuchFieldException {
-		return getField(target, null, fieldType, index);
-	}
+    /**
+     * Gets a field
+     *
+     * @param clazz     class
+     * @param fieldName field name
+     * @return field
+     * @throws NoSuchFieldException when something goes wrong
+     */
+    public static Field getField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+        return clazz.getDeclaredField(fieldName);
+    }
 
-	/**
-	 * Gets a field
-	 *
-	 * @param target    class
-	 * @param name      field name
-	 * @param fieldType field type
-	 * @param <T>       type
-	 * @return field accessor
-	 * @throws NoSuchFieldException when something goes wrong
-	 */
-	public static <T> FieldAccessor<T> getField(Class<?> target, String name, Class<T> fieldType) throws NoSuchFieldException {
-		return getField(target, name, fieldType, 0);
-	}
+    /**
+     * Gets a field
+     *
+     * @param target    class
+     * @param fieldType field type
+     * @param index     index
+     * @param <T>       type
+     * @return field accessor
+     * @throws NoSuchFieldException when something goes wrong
+     */
+    public static <T> FieldAccessor<T> getField(Class<?> target, Class<T> fieldType, int index) throws NoSuchFieldException {
+        return getField(target, null, fieldType, index);
+    }
 
-	/**
-	 * Gets a field
-	 *
-	 * @param target    class
-	 * @param name      field name
-	 * @param fieldType field type
-	 * @param index     index
-	 * @param <T>       type
-	 * @return field accessor
-	 * @throws NoSuchFieldException when something goes wrong
-	 */
-	private static <T> FieldAccessor<T> getField(Class<?> target, String name, Class<T> fieldType, int index) throws NoSuchFieldException {
-		Validate.notNull(target);
-		Validate.notNull(fieldType);
+    /**
+     * Gets a field
+     *
+     * @param target    class
+     * @param name      field name
+     * @param fieldType field type
+     * @param <T>       type
+     * @return field accessor
+     * @throws NoSuchFieldException when something goes wrong
+     */
+    public static <T> FieldAccessor<T> getField(Class<?> target, String name, Class<T> fieldType) throws NoSuchFieldException {
+        return getField(target, name, fieldType, 0);
+    }
 
-		for(final Field field : target.getDeclaredFields()) {
-			if((name == null || field.getName().equals(name)) && fieldType.isAssignableFrom(field.getType()) && index-- <= 0) {
-				field.setAccessible(true);
-				return new FieldAccessorImpl<>(field);
-			}
-		}
+    /**
+     * Gets a field
+     *
+     * @param target    class
+     * @param name      field name
+     * @param fieldType field type
+     * @param index     index
+     * @param <T>       type
+     * @return field accessor
+     * @throws NoSuchFieldException when something goes wrong
+     */
+    private static <T> FieldAccessor<T> getField(Class<?> target, String name, Class<T> fieldType, int index) throws NoSuchFieldException {
+        Validate.notNull(target);
+        Validate.notNull(fieldType);
 
-		if(target.getSuperclass() != null) {
-			return getField(target.getSuperclass(), name, fieldType, index);
-		}
+        for (final Field field : target.getDeclaredFields()) {
+            if ((name == null || field.getName().equals(name)) && fieldType.isAssignableFrom(field.getType()) && index-- <= 0) {
+                field.setAccessible(true);
+                return new FieldAccessorImpl<>(field);
+            }
+        }
 
-		throw new NoSuchFieldException("Cannot find field with type " + fieldType);
-	}
+        if (target.getSuperclass() != null) {
+            return getField(target.getSuperclass(), name, fieldType, index);
+        }
 
-	/**
-	 * Gets a private field
-	 *
-	 * @param clazz     class
-	 * @param fieldName field name
-	 * @return field
-	 * @throws NoSuchFieldException when a field doesn't exist
-	 * @throws NoSuchFieldException when something goes wrong
-	 */
-	public static Field getPrivateField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
-		Field field = clazz.getDeclaredField(fieldName);
-		field.setAccessible(true);
-		return field;
-	}
+        throw new NoSuchFieldException("Cannot find field with type " + fieldType);
+    }
 
-	/**
-	 * Gets fields
-	 *
-	 * @param clazz class
-	 * @param type  searched field type
-	 * @param <T>   type parameter
-	 * @return set with fields
-	 */
-	public static <T> Set<FieldAccessor<T>> getFields(Class<?> clazz, Class<T> type) {
-		Set<FieldAccessor<T>> collection = new HashSet<>();
+    /**
+     * Gets a private field
+     *
+     * @param clazz     class
+     * @param fieldName field name
+     * @return field
+     * @throws NoSuchFieldException when a field doesn't exist
+     * @throws NoSuchFieldException when something goes wrong
+     */
+    public static Field getPrivateField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field;
+    }
 
-		for(Field field : clazz.getFields()) {
-			if(!field.getType().equals(type)) {
-				continue;
-			}
+    /**
+     * Gets fields
+     *
+     * @param clazz class
+     * @param type  searched field type
+     * @param <T>   type parameter
+     * @return set with fields
+     */
+    public static <T> Set<FieldAccessor<T>> getFields(Class<?> clazz, Class<T> type) {
+        return Arrays.stream(clazz.getFields())
+                .filter(field -> field.getType().equals(type))
+                .map((Function<Field, FieldAccessorImpl<T>>) FieldAccessorImpl::new)
+                .collect(Collectors.toSet());
+    }
 
-			collection.add(new FieldAccessorImpl<T>(field));
-		}
+    /**
+     * Gets a method
+     *
+     * @param clazz  class
+     * @param method method name
+     * @param args   argument classes
+     * @return method
+     * @throws NoSuchMethodException when something goes wrong
+     */
+    public static Method getMethod(Class<?> clazz, String method, Class<?>... args) throws NoSuchMethodException {
+        return Arrays.stream(clazz.getMethods())
+                .filter(m -> m.getName().equals(method) && classListEqual(args, m.getParameterTypes()))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchMethodException("Could not access the method"));
+    }
 
-		return collection;
-	}
+    /**
+     * Gets a method
+     *
+     * @param clazz  class
+     * @param method method name
+     * @return method
+     * @throws NoSuchMethodException when something goes wrong
+     */
+    public static Method getMethod(Class<?> clazz, String method) throws NoSuchMethodException {
+        return Arrays.stream(clazz.getMethods())
+                .filter(m -> m.getName().equals(method))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchMethodException("Could not access the method"));
+    }
 
-	/**
-	 * Gets a method
-	 *
-	 * @param clazz  class
-	 * @param method method name
-	 * @param args   argument classes
-	 * @return method
-	 * @throws NoSuchMethodException when something goes wrong
-	 */
-	public static Method getMethod(Class<?> clazz, String method, Class<?>... args) throws NoSuchMethodException {
-		for(Method m : clazz.getMethods()) {
-			if(m.getName().equals(method) && classListEqual(args, m.getParameterTypes())) {
-				return m;
-			}
-		}
+    /**
+     * Sets the field as not final
+     *
+     * @param field field
+     * @throws IllegalAccessException when something goes wrong
+     */
+    public static void setNotFinal(Field field) throws IllegalAccessException {
+        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+    }
 
-		throw new NoSuchMethodException("Could not access the method");
-	}
+    /**
+     * Gets a method
+     *
+     * @param clazz      class
+     * @param type       return type
+     * @param methodName method name
+     * @param args       argument types
+     * @param <T>        return type
+     * @return method invoker
+     * @throws NoSuchMethodException when something goes wrong
+     */
+    public static <T> MethodInvoker<T> getMethod(final Class<?> clazz, final Class<T> type, final String methodName, final Class<?>... args) throws NoSuchMethodException {
+        return new MethodInvoker<T>() {
+            private final Method method;
 
-	/**
-	 * Gets a method
-	 *
-	 * @param clazz  class
-	 * @param method method name
-	 * @return method
-	 * @throws NoSuchMethodException when something goes wrong
-	 */
-	public static Method getMethod(Class<?> clazz, String method) throws NoSuchMethodException {
-		for(Method m : clazz.getMethods()) {
-			if(m.getName().equals(method)) {
-				return m;
-			}
-		}
+            {
+                if (args.length == 0) {
+                    method = getMethod(clazz, methodName);
+                } else {
+                    method = getMethod(clazz, methodName, args);
+                }
 
-		throw new NoSuchMethodException("Could not access the method");
-	}
+                if (!method.getReturnType().equals(type)) {
+                    throw new IllegalArgumentException("Invalid return type. " + type.getName() + " assumed, got " + method.getReturnType().getName());
+                }
+            }
 
-	/**
-	 * Sets the field as not final
-	 *
-	 * @param field field
-	 * @throws IllegalAccessException when something goes wrong
-	 */
-	public static void setNotFinal(Field field) throws IllegalAccessException {
-		modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-	}
+            @Override
+            @SuppressWarnings("unchecked")
+            public T invoke(Object target, Object... arguments) {
+                try {
+                    return (T) method.invoke(target, arguments);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new RuntimeException("Cannot access reflection.", e);
+                }
+            }
+        };
+    }
 
-	/**
-	 * Gets a method
-	 *
-	 * @param clazz      class
-	 * @param type       return type
-	 * @param methodName method name
-	 * @param args       argument types
-	 * @param <T>        return type
-	 * @return method invoker
-	 * @throws NoSuchMethodException when something goes wrong
-	 */
-	public static <T> MethodInvoker<T> getMethod(final Class<?> clazz, final Class<T> type, final String methodName, final Class<?>... args) throws NoSuchMethodException {
-		return new MethodInvoker<T>() {
-			private final Method method;
+    /**
+     * Compares two lists of classes
+     *
+     * @param l1 list 1
+     * @param l2 list 2
+     * @return boolean
+     */
+    public static boolean classListEqual(Class<?>[] l1, Class<?>[] l2) {
+        if (l1.length != l2.length) {
+            return false;
+        }
 
-			{
-				if(args.length == 0) {
-					method = getMethod(clazz, methodName);
-				}
-				else {
-					method = getMethod(clazz, methodName, args);
-				}
+        return IntStream.range(0, l1.length).noneMatch(i -> l1[i] != l2[i]);
+    }
 
-				if(!method.getReturnType().equals(type)) {
-					throw new IllegalArgumentException("Invalid return type. " + type.getName() + " assumed, got " + method.getReturnType().getName());
-				}
-			}
+    /**
+     * Converts the value to an enum
+     *
+     * @param clazz enum class
+     * @param name  enum constant name
+     * @return enum value
+     */
+    public static Enum getEnumConstant(Class<?> clazz, String name) {
+        if (!clazz.isEnum()) {
+            throw new IllegalArgumentException("Class" + clazz.getName() + " is not an enum");
+        }
 
-			@Override
-			@SuppressWarnings("unchecked")
-			public T invoke(Object target, Object... arguments) {
-				try {
-					return (T) method.invoke(target, arguments);
-				}
-				catch(IllegalAccessException | InvocationTargetException e) {
-					throw new RuntimeException("Cannot access reflection.", e);
-				}
-			}
-		};
-	}
+        for (Object enumConstant : clazz.getEnumConstants()) {
+            if (((Enum) enumConstant).name().equalsIgnoreCase(name)) {
+                return (Enum) enumConstant;
+            }
+        }
 
-	/**
-	 * Compares two lists of classes
-	 *
-	 * @param l1 list 1
-	 * @param l2 list 2
-	 * @return boolean
-	 */
-	public static boolean classListEqual(Class<?>[] l1, Class<?>[] l2) {
-		if(l1.length != l2.length) {
-			return false;
-		}
+        throw new IllegalArgumentException("Could not find enum constant");
+    }
 
-		for(int i = 0; i < l1.length; i++) {
-			if(l1[i] != l2[i]) {
-				return false;
-			}
-		}
+    /**
+     * Gets CraftBukkit version
+     *
+     * @return the version
+     */
+    public static String getVersion() {
+        String name = Bukkit.getServer().getClass().getPackage().getName();
+        return name.substring(name.lastIndexOf('.') + 1) + ".";
+    }
 
-		return true;
-	}
+    public interface ConstructorInvoker<T> {
 
-	/**
-	 * Converts the value to an enum
-	 *
-	 * @param clazz enum class
-	 * @param name enum constant name
-	 * @return enum value
-	 */
-	public static Enum getEnumConstant(Class<?> clazz, String name) {
-		if(!clazz.isEnum()) {
-			throw new IllegalArgumentException("Class" + clazz.getName() + " is not an enum");
-		}
+        /**
+         * Invokes a constructor
+         *
+         * @param arguments arguments
+         * @return instance
+         */
+        T invoke(Object... arguments);
 
-		for(Object enumConstant : clazz.getEnumConstants()) {
-			if(((Enum) enumConstant).name().equalsIgnoreCase(name)) {
-				return (Enum) enumConstant;
-			}
-		}
+    }
 
-		throw new IllegalArgumentException("Could not find enum constant");
-	}
-
-	/**
-	 * Gets CraftBukkit version
-	 *
-	 * @return the version
-	 */
-	public static String getVersion() {
-		String name = Bukkit.getServer().getClass().getPackage().getName();
-		return name.substring(name.lastIndexOf('.') + 1) + ".";
-	}
-
-	public interface ConstructorInvoker<T> {
-		/**
-		 * Invokes a constructor
-		 *
-		 * @param arguments arguments
-		 * @return instance
-		 */
-		T invoke(Object... arguments);
-	}
 }

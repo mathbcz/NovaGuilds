@@ -26,85 +26,78 @@ import co.marcin.novaguilds.enums.Message;
 import co.marcin.novaguilds.impl.util.preparedtag.PreparedTagScoreboardImpl;
 import co.marcin.novaguilds.manager.PlayerManager;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Score;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.Team;
+import org.bukkit.scoreboard.*;
 
 public final class TagUtils {
-	private TagUtils() {
-	}
 
-	/**
-	 * Refreshes tag of a player
-	 *
-	 * @param p target player
-	 */
-	@SuppressWarnings("deprecation")
-	public static void refresh(Player p) {
-		if(!Config.TAGAPI_ENABLED.getBoolean()) {
-			return;
-		}
+    private TagUtils() {
+    }
 
-		Scoreboard board = p.getScoreboard();
-		for(Player player : CompatibilityUtils.getOnlinePlayers()) {
-			NovaPlayer nPlayerLoop = PlayerManager.getPlayer(player);
+    /**
+     * Refreshes tag of a player
+     *
+     * @param p target player
+     */
+    @SuppressWarnings("deprecation")
+    public static void refresh(Player p) {
+        if (!Config.TAGAPI_ENABLED.getBoolean()) {
+            return;
+        }
 
-			String tName = "ng_" + player.getName();
-			if(tName.length() > 16) {
-				tName = tName.substring(0, 16);
-			}
+        Scoreboard board = p.getScoreboard();
+        for (Player player : CompatibilityUtils.getOnlinePlayers()) {
+            NovaPlayer nPlayerLoop = PlayerManager.getPlayer(player);
 
-			Team team = board.getTeam(tName);
+            String tName = "ng_" + player.getName();
+            if (tName.length() > 16) {
+                tName = tName.substring(0, 16);
+            }
 
-			if(team == null) {
-				team = board.registerNewTeam(tName);
-				team.addPlayer(player);
-			}
+            Team team = board.getTeam(tName);
 
-			//Points
-			Objective pointsObjective = board.getObjective("points");
-			if(Config.POINTSBELOWNAME.getBoolean()) {
-				if(pointsObjective == null) {
-					pointsObjective = board.registerNewObjective("points", "dummy");
-					pointsObjective.setDisplaySlot(DisplaySlot.BELOW_NAME);
-					pointsObjective.setDisplayName(Message.MISC_POINTSBELOWNAME.get());
-				}
+            if (team == null) {
+                team = board.registerNewTeam(tName);
+                team.addPlayer(player);
+            }
 
-				Score score = pointsObjective.getScore(player);
-				score.setScore(nPlayerLoop.getPoints());
-			}
-			else if(pointsObjective != null) {
-				pointsObjective.unregister();
-			}
+            //Points
+            Objective pointsObjective = board.getObjective("points");
+            if (Config.POINTSBELOWNAME.getBoolean()) {
+                if (pointsObjective == null) {
+                    pointsObjective = board.registerNewObjective("points", "dummy");
+                    pointsObjective.setDisplaySlot(DisplaySlot.BELOW_NAME);
+                    pointsObjective.setDisplayName(Message.MISC_POINTSBELOWNAME.get());
+                }
 
-			//set tag
-			PreparedTag tag = new PreparedTagScoreboardImpl(PlayerManager.getPlayer(player));
-			tag.setTagColorFor(PlayerManager.getPlayer(p));
-			team.setPrefix(tag.get());
-		}
-	}
+                Score score = pointsObjective.getScore(player);
+                score.setScore(nPlayerLoop.getPoints());
+            } else if (pointsObjective != null) {
+                pointsObjective.unregister();
+            }
 
-	/**
-	 * Refreshes tags of all players online
-	 */
-	public static void refresh() {
-		for(Player player : CompatibilityUtils.getOnlinePlayers()) {
-			refresh(player);
-		}
-	}
+            //set tag
+            PreparedTag tag = new PreparedTagScoreboardImpl(PlayerManager.getPlayer(player));
+            tag.setTagColorFor(PlayerManager.getPlayer(p));
+            team.setPrefix(tag.get());
+        }
+    }
 
-	/**
-	 * Refreshes tags of a whole guild
-	 *
-	 * @param guild target guild
-	 */
-	public static void refresh(NovaGuild guild) {
-		if(guild != null) {
-			for(Player player : guild.getOnlinePlayers()) {
-				refresh(player);
-			}
-		}
-	}
+    /**
+     * Refreshes tags of all players online
+     */
+    public static void refresh() {
+        CompatibilityUtils.getOnlinePlayers().forEach(TagUtils::refresh);
+    }
+
+    /**
+     * Refreshes tags of a whole guild
+     *
+     * @param guild target guild
+     */
+    public static void refresh(NovaGuild guild) {
+        if (guild != null) {
+            guild.getOnlinePlayers().forEach(TagUtils::refresh);
+        }
+    }
+
 }
